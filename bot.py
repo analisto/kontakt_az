@@ -31,6 +31,67 @@ logger = logging.getLogger(__name__)
 chatbot = GeminiChatbot()
 chart_generator = ChartGenerator()
 
+# Telegram message length limit
+MAX_MESSAGE_LENGTH = 4096
+
+
+def split_message(text: str, max_length: int = MAX_MESSAGE_LENGTH) -> list[str]:
+    """Split a long message into chunks that fit Telegram's limit."""
+    if len(text) <= max_length:
+        return [text]
+
+    chunks = []
+    current_chunk = ""
+
+    # Split by paragraphs first to maintain readability
+    paragraphs = text.split('\n\n')
+
+    for paragraph in paragraphs:
+        # If adding this paragraph exceeds limit, save current chunk and start new one
+        if len(current_chunk) + len(paragraph) + 2 > max_length:
+            if current_chunk:
+                chunks.append(current_chunk.strip())
+                current_chunk = ""
+
+            # If paragraph itself is too long, split it
+            if len(paragraph) > max_length:
+                # Split by lines first
+                lines = paragraph.split('\n')
+                for line in lines:
+                    # If line is still too long, force split by character
+                    if len(line) > max_length:
+                        while len(line) > 0:
+                            if current_chunk and len(current_chunk) + len(line) > max_length:
+                                chunks.append(current_chunk.strip())
+                                current_chunk = ""
+
+                            # Take as much as we can
+                            available_space = max_length - len(current_chunk) - 1
+                            if available_space <= 0:
+                                chunks.append(current_chunk.strip())
+                                current_chunk = ""
+                                available_space = max_length
+
+                            current_chunk += line[:available_space]
+                            line = line[available_space:]
+                        current_chunk += '\n'
+                    else:
+                        if len(current_chunk) + len(line) + 1 > max_length:
+                            if current_chunk:
+                                chunks.append(current_chunk.strip())
+                            current_chunk = line + '\n'
+                        else:
+                            current_chunk += line + '\n'
+            else:
+                current_chunk = paragraph + '\n\n'
+        else:
+            current_chunk += paragraph + '\n\n'
+
+    if current_chunk.strip():
+        chunks.append(current_chunk.strip())
+
+    return chunks
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle /start command."""
@@ -283,7 +344,10 @@ async def summary_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Get quick financial summary."""
     try:
         text = AnalyticsEngine.get_insights_text()
-        await update.message.reply_text(text, parse_mode='Markdown')
+        # Split message if too long
+        message_chunks = split_message(text)
+        for chunk in message_chunks:
+            await update.message.reply_text(chunk, parse_mode='Markdown')
     except Exception as e:
         await update.message.reply_text(f"Error generating summary: {str(e)}")
 
@@ -363,7 +427,10 @@ async def ask_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         analytics_context=analytics_context
     )
 
-    await update.message.reply_text(response)
+    # Split message if too long and send in chunks
+    message_chunks = split_message(response)
+    for chunk in message_chunks:
+        await update.message.reply_text(chunk)
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -410,11 +477,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         response = chatbot.chat(user_id, user_message)
 
-    # In groups, reply to the message for context
-    if chat.type in ['group', 'supergroup']:
-        await update.message.reply_text(response)
-    else:
-        await update.message.reply_text(response)
+    # Split message if too long and send in chunks
+    message_chunks = split_message(response)
+    for chunk in message_chunks:
+        # In groups, reply to the message for context
+        if chat.type in ['group', 'supergroup']:
+            await update.message.reply_text(chunk)
+        else:
+            await update.message.reply_text(chunk)
 
 
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
