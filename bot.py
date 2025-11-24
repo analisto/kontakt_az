@@ -1,6 +1,9 @@
 """Main Telegram bot application."""
 
 import logging
+import os
+from threading import Thread
+from flask import Flask
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application,
@@ -408,6 +411,19 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.error(f"Update {update} caused error {context.error}")
 
 
+def run_health_server():
+    """Run a simple health check server for Render."""
+    app = Flask(__name__)
+
+    @app.route('/')
+    @app.route('/health')
+    def health():
+        return {'status': 'ok', 'service': 'analyst_in_pocket_bot'}, 200
+
+    port = int(os.environ.get('PORT', 10000))
+    app.run(host='0.0.0.0', port=port)
+
+
 def main():
     """Start the bot."""
     # Validate configuration
@@ -416,6 +432,12 @@ def main():
     except ValueError as e:
         logger.error(f"Configuration error: {e}")
         return
+
+    # Start health check server in background thread (for Render)
+    if os.environ.get('RENDER'):
+        health_thread = Thread(target=run_health_server, daemon=True)
+        health_thread.start()
+        logger.info("Health check server started")
 
     # Create application
     application = Application.builder().token(Config.TELEGRAM_BOT_TOKEN).build()
