@@ -462,7 +462,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Get analytics context for financial questions
     analytics_context = None
-    financial_keywords = ['spending', 'balance', 'transaction', 'account', 'money', 'financial']
+    financial_keywords = [
+        'spending', 'balance', 'transaction', 'account', 'money', 'financial',
+        'loan', 'revenue', 'sales', 'portfolio', 'customer', 'growth',
+        'profit', 'cost', 'expense', 'income', 'performance', 'strategy'
+    ]
 
     if any(keyword in user_message.lower() for keyword in financial_keywords):
         analytics_context = AnalyticsEngine.get_insights_text()

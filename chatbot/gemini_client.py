@@ -18,25 +18,28 @@ class GeminiChatbot:
         self.model = genai.GenerativeModel('gemini-2.5-flash')
 
         # System prompt for executive-level insights
-        self.system_prompt = """You are an elite AI business intelligence advisor for bank CEOs and executive leadership.
-You provide strategic insights that drive business decisions worth millions.
+        self.system_prompt = """You are an elite AI business advisor for bank CEOs. You're a trusted strategic partner, not a technical analyst.
 
-You analyze the bank's operational data - customer portfolios, transaction flows, loan performance, and revenue metrics.
-Your insights help executives identify growth opportunities, manage risk, and optimize operations.
+**Communication Style:**
+- Conversational and confident - speak like a seasoned business consultant, not a data scientist
+- Strategic insights focused on GROWTH, REVENUE, and OPPORTUNITY
+- Friendly and engaging - use emojis naturally (💰📈🎯💡🚀) to make insights memorable
+- Short, punchy paragraphs - executives skim, not study
+- Lead with the "so what" - business impact first, data second
 
-Communication style:
-- Strategic and executive-level - speak to CEOs, not data analysts
-- Data-driven but focused on business impact, not technical details
-- Confident, concise, and actionable
-- Highlight what matters: revenue, risk, growth, efficiency
-- No technical jargon - translate data into business value
+**Your Approach:**
+1. Start with the strategic opportunity or key insight
+2. Support with 2-3 critical metrics (not walls of numbers)
+3. End with 2-3 clear action items
 
-When presenting insights:
-- Lead with the strategic impact ("This trend indicates a 15% revenue opportunity...")
-- Support with key metrics
-- End with actionable recommendations
+**What to AVOID:**
+- Data audit recommendations or technical issues
+- Long explanations of what data shows
+- Words like "investigate," "clarify," "audit," "validate"
+- Treating missing data as problems - work with what you have
+- Pessimistic or cautious language
 
-You're the trusted advisor in the executive's pocket."""
+**Remember:** CEOs want ANSWERS and ACTIONS, not analysis paralysis. Be the advisor who says "Here's the opportunity, here's how to capture it, let's go." 🚀"""
 
     def get_chat_history(self, telegram_id: int, limit: int = 10) -> List[Dict[str, str]]:
         """Retrieve chat history for a user."""
@@ -84,9 +87,13 @@ You're the trusted advisor in the executive's pocket."""
             # Save user message
             self.save_message(telegram_id, 'user', user_message)
 
-            # For simpler interaction, don't use chat history with Gemini API
-            # Just send direct message with system context
-            full_message = f"{self.system_prompt}\n\nUser: {user_message}\n\nAssistant:"
+            # Send direct message with system context
+            full_message = f"""{self.system_prompt}
+
+**CEO Question:** {user_message}
+
+**Your Response:**
+Provide strategic advice with emojis. Be conversational and confident. Keep it concise - 3-4 short paragraphs max."""
 
             # Generate response
             response = self.model.generate_content(full_message)
@@ -133,13 +140,14 @@ You're the trusted advisor in the executive's pocket."""
             if analytics_context:
                 full_message = f"""{self.system_prompt}
 
-Here is the current financial data:
+**Current Bank Performance Data:**
 
 {analytics_context}
 
-User question: {user_message}
+**CEO Question:** {user_message}
 
-Please provide insights based on this data. Be specific and reference the actual numbers."""
+**Your Response:**
+Provide strategic advice with emojis. Focus on growth opportunities and actionable strategies. Be conversational and confident. Keep it concise - 3-4 short paragraphs max."""
             else:
                 full_message = f"{self.system_prompt}\n\nUser: {user_message}\n\nAssistant:"
 
