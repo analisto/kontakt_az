@@ -2,6 +2,7 @@
 
 import logging
 import os
+import re
 from threading import Thread
 from flask import Flask
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -447,15 +448,19 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             update.message.reply_to_message and
             update.message.reply_to_message.from_user.id == context.bot.id
         )
-        is_mentioned = f"@{bot_username}" in user_message.lower() if bot_username else False
+
+        # Check for mention (case-insensitive)
+        is_mentioned = False
+        if bot_username:
+            is_mentioned = f"@{bot_username.lower()}" in user_message.lower()
 
         # Only respond if mentioned or replied to
         if not (is_reply_to_bot or is_mentioned):
             return
 
-        # Remove bot mention from message
+        # Remove bot mention from message (case-insensitive)
         if is_mentioned and bot_username:
-            user_message = user_message.replace(f"@{bot_username}", "").strip()
+            user_message = re.sub(f"@{re.escape(bot_username)}", "", user_message, flags=re.IGNORECASE).strip()
 
     # Show typing indicator
     await update.message.chat.send_action(action="typing")

@@ -203,8 +203,12 @@ The bot responds when you mention it or reply to its messages:
 
 **Method 1: Mention the bot**
 ```
-@analyst_bot What's our transaction volume trend?
+@your_bot_username What's our transaction volume trend?
 ```
+**Important:**
+- Replace `@your_bot_username` with your actual bot's username (the one you set in BotFather)
+- Mention detection is case-insensitive - `@MyBot` and `@mybot` both work
+- To find your bot's username: Check the bot's profile in Telegram or look for the username in BotFather
 
 **Method 2: Reply to bot's message**
 ```
@@ -359,14 +363,14 @@ suggests untapped lending revenue potential.
 **Scenario:** Leadership team discussing Q4 strategy in group chat
 
 ```
-CFO: @analyst_bot Show expenditure breakdown
+CFO: @your_bot_username Show expenditure breakdown
 Bot: [Sends chart and analysis showing 87.7% in loan servicing]
 
 CEO: [Replies to bot] How does this compare to revenue?
 Bot: Current revenue covers loan servicing with 35% margin for operations.
 This is healthy but below industry standard of 45-50%. Consider...
 
-COO: @analyst_bot What operational efficiencies can improve margins?
+COO: @your_bot_username What operational efficiencies can improve margins?
 Bot: [Provides detailed efficiency analysis]
 ```
 
