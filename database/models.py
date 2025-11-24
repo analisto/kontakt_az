@@ -1,7 +1,7 @@
 """Database models for the Analyst Bot."""
 
 from datetime import datetime, date
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text, Numeric, Date, Boolean, CHAR
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text, Numeric, Date, Boolean, CHAR, BigInteger
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
@@ -14,7 +14,7 @@ class TelegramUser(Base):
     __table_args__ = {'schema': 'demo_bank'}
 
     id = Column(Integer, primary_key=True)
-    telegram_id = Column(Integer, unique=True, nullable=False)
+    telegram_id = Column(BigInteger, unique=True, nullable=False)  # BigInteger for Telegram IDs
     username = Column(String(255))
     first_name = Column(String(255))
     last_name = Column(String(255))
@@ -149,7 +149,7 @@ class ChatHistory(Base):
     __table_args__ = {'schema': 'demo_bank'}
 
     id = Column(Integer, primary_key=True)
-    telegram_id = Column(Integer, nullable=False)
+    telegram_id = Column(BigInteger, nullable=False)  # BigInteger for Telegram IDs
     role = Column(String(50))  # user, assistant
     message = Column(Text)
     timestamp = Column(DateTime, default=datetime.utcnow)

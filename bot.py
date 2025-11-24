@@ -12,7 +12,7 @@ from telegram.ext import (
 )
 
 from config import Config
-from database import init_db, get_session
+from database import get_session
 from database.models import TelegramUser
 from analytics import AnalyticsEngine, ChartGenerator
 from chatbot import GeminiChatbot
@@ -416,10 +416,6 @@ def main():
     except ValueError as e:
         logger.error(f"Configuration error: {e}")
         return
-
-    # Initialize database
-    logger.info("Initializing database...")
-    init_db()
 
     # Create application
     application = Application.builder().token(Config.TELEGRAM_BOT_TOKEN).build()
