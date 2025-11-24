@@ -13,7 +13,7 @@ from telegram.ext import (
 
 from config import Config
 from database import init_db, get_session
-from database.models import User
+from database.models import TelegramUser
 from analytics import AnalyticsEngine, ChartGenerator
 from chatbot import GeminiChatbot
 
@@ -35,9 +35,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Save user to database
     with get_session() as session:
-        db_user = session.query(User).filter(User.telegram_id == user.id).first()
+        db_user = session.query(TelegramUser).filter(TelegramUser.telegram_id == user.id).first()
         if not db_user:
-            db_user = User(
+            db_user = TelegramUser(
                 telegram_id=user.id,
                 username=user.username,
                 first_name=user.first_name,
@@ -156,18 +156,19 @@ async def handle_analytics_callback(update: Update, context: ContextTypes.DEFAUL
             await query.edit_message_text(text, parse_mode='Markdown')
 
         elif action == 'spending':
-            spending = AnalyticsEngine.get_spending_by_category()
+            spending = AnalyticsEngine.get_spending_by_type()
 
             # Send chart
             chart = chart_generator.create_spending_by_category_chart(spending)
-            await query.message.reply_photo(photo=chart, caption="📊 Spending by Category")
+            await query.message.reply_photo(photo=chart, caption="📊 Spending by Type")
 
             # Also send text summary
-            text = "**Top Spending Categories:**\n\n"
-            for i, (category, amount) in enumerate(
+            text = "**Top Spending by Type:**\n\n"
+            for i, (trans_type, amount) in enumerate(
                 sorted(spending.items(), key=lambda x: x[1], reverse=True)[:10], 1
             ):
-                text += f"{i}. {category}: ${amount:,.2f}\n"
+                display_name = trans_type.replace('_', ' ').title()
+                text += f"{i}. {display_name}: ${amount:,.2f}\n"
 
             await query.message.reply_text(text, parse_mode='Markdown')
 

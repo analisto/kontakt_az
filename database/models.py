@@ -1,16 +1,16 @@
 """Database models for the Analyst Bot."""
 
-from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text
+from datetime import datetime, date
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text, Numeric, Date, Boolean, CHAR
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
 
 
-class User(Base):
-    """User model for storing bot users."""
+class TelegramUser(Base):
+    """Telegram bot user model (separate from bank users)."""
 
-    __tablename__ = 'users'
+    __tablename__ = 'telegram_users'
     __table_args__ = {'schema': 'demo_bank'}
 
     id = Column(Integer, primary_key=True)
@@ -22,48 +22,124 @@ class User(Base):
     last_active = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def __repr__(self):
-        return f"<User(telegram_id={self.telegram_id}, username={self.username})>"
+        return f"<TelegramUser(telegram_id={self.telegram_id}, username={self.username})>"
 
 
-class Account(Base):
-    """Bank account model."""
+class Customer(Base):
+    """Bank customer model - maps to existing customers table."""
 
-    __tablename__ = 'accounts'
-    __table_args__ = {'schema': 'demo_bank'}
+    __tablename__ = 'customers'
+    __table_args__ = {'schema': 'demo_bank', 'extend_existing': True}
 
-    id = Column(Integer, primary_key=True)
-    account_number = Column(String(50), unique=True, nullable=False)
-    account_type = Column(String(50))
-    balance = Column(Float, default=0.0)
-    currency = Column(String(10), default='USD')
-    customer_name = Column(String(255))
+    customer_id = Column(Integer, primary_key=True)
+    first_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=False)
+    date_of_birth = Column(Date, nullable=False)
+    email = Column(String, nullable=False)
+    phone_number = Column(String)
+    street_address = Column(String)
+    city = Column(String)
+    state = Column(String)
+    postal_code = Column(String)
+    country = Column(String, default='USA')
+    account_number = Column(String, nullable=False)
+    account_type = Column(String, nullable=False)
+    account_balance = Column(Numeric, nullable=False, default=0.00)
+    ssn_last_four = Column(CHAR(4))
+    id_type = Column(String)
+    id_number = Column(String)
+    account_status = Column(String, default='active')
+    credit_score = Column(Integer)
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_login = Column(DateTime)
 
-    transactions = relationship("Transaction", back_populates="account")
+    transactions = relationship("Transaction", back_populates="customer")
+    loans = relationship("Loan", back_populates="customer")
 
     def __repr__(self):
-        return f"<Account(account_number={self.account_number}, balance={self.balance})>"
+        return f"<Customer(id={self.customer_id}, name={self.first_name} {self.last_name})>"
 
 
 class Transaction(Base):
-    """Transaction model."""
+    """Transaction model - maps to existing transactions table."""
 
     __tablename__ = 'transactions'
-    __table_args__ = {'schema': 'demo_bank'}
+    __table_args__ = {'schema': 'demo_bank', 'extend_existing': True}
 
-    id = Column(Integer, primary_key=True)
-    account_id = Column(Integer, ForeignKey('demo_bank.accounts.id'), nullable=False)
-    transaction_type = Column(String(50))  # credit, debit, transfer
-    amount = Column(Float, nullable=False)
+    transaction_id = Column(Integer, primary_key=True)
+    customer_id = Column(Integer, ForeignKey('demo_bank.customers.customer_id'), nullable=False)
+    loan_id = Column(Integer, ForeignKey('demo_bank.loans.loan_id'))
+    transaction_reference = Column(String, nullable=False)
+    transaction_type = Column(String, nullable=False)
+    amount = Column(Numeric, nullable=False)
+    currency = Column(String, default='USD')
+    balance_before = Column(Numeric, nullable=False)
+    balance_after = Column(Numeric, nullable=False)
     description = Column(Text)
-    category = Column(String(100))
-    transaction_date = Column(DateTime, default=datetime.utcnow)
-    balance_after = Column(Float)
+    notes = Column(Text)
+    transaction_method = Column(String)
+    counterparty_account = Column(String)
+    counterparty_name = Column(String)
+    counterparty_bank = Column(String)
+    branch_code = Column(String)
+    atm_id = Column(String)
+    transaction_status = Column(String, default='completed')
+    transaction_date = Column(Date, nullable=False, default=date.today)
+    transaction_time = Column(DateTime, nullable=False, default=datetime.utcnow)
+    posted_date = Column(Date)
+    value_date = Column(Date)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    processed_by = Column(String)
+    authorized_by = Column(String)
+    is_flagged = Column(Boolean, default=False)
+    flag_reason = Column(Text)
 
-    account = relationship("Account", back_populates="transactions")
+    customer = relationship("Customer", back_populates="transactions")
+    loan = relationship("Loan", back_populates="transactions")
 
     def __repr__(self):
-        return f"<Transaction(id={self.id}, type={self.transaction_type}, amount={self.amount})>"
+        return f"<Transaction(id={self.transaction_id}, type={self.transaction_type}, amount={self.amount})>"
+
+
+class Loan(Base):
+    """Loan model - maps to existing loans table."""
+
+    __tablename__ = 'loans'
+    __table_args__ = {'schema': 'demo_bank', 'extend_existing': True}
+
+    loan_id = Column(Integer, primary_key=True)
+    customer_id = Column(Integer, ForeignKey('demo_bank.customers.customer_id'), nullable=False)
+    loan_number = Column(String, nullable=False)
+    loan_type = Column(String, nullable=False)
+    loan_purpose = Column(Text)
+    principal_amount = Column(Numeric, nullable=False)
+    interest_rate = Column(Numeric, nullable=False)
+    loan_term_months = Column(Integer, nullable=False)
+    monthly_payment = Column(Numeric, nullable=False)
+    outstanding_balance = Column(Numeric, nullable=False, default=0.00)
+    total_paid = Column(Numeric, default=0.00)
+    application_date = Column(Date, nullable=False, default=date.today)
+    approval_date = Column(Date)
+    disbursement_date = Column(Date)
+    first_payment_date = Column(Date)
+    maturity_date = Column(Date)
+    loan_status = Column(String, default='pending')
+    payment_status = Column(String, default='current')
+    days_past_due = Column(Integer, default=0)
+    collateral_type = Column(String)
+    collateral_value = Column(Numeric)
+    loan_officer_name = Column(String)
+    loan_officer_id = Column(String)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_payment_date = Column(Date)
+
+    customer = relationship("Customer", back_populates="loans")
+    transactions = relationship("Transaction", back_populates="loan")
+
+    def __repr__(self):
+        return f"<Loan(id={self.loan_id}, number={self.loan_number}, balance={self.outstanding_balance})>"
 
 
 class ChatHistory(Base):
