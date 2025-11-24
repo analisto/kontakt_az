@@ -238,15 +238,15 @@ async def handle_analytics_callback(update: Update, context: ContextTypes.DEFAUL
             chart = chart_generator.create_transaction_trend_chart(df)
             await query.message.reply_photo(
                 photo=chart,
-                caption="📈 Transaction Trends (Last 30 Days)"
+                caption="📈 Transaction Trends (Last 90 Days)"
             )
 
         elif action == 'balance_trend':
-            df = AnalyticsEngine.get_daily_balance_trend(days=30)
+            df = AnalyticsEngine.get_daily_balance_trend(days=90)
             chart = chart_generator.create_balance_trend_chart(df)
             await query.message.reply_photo(
                 photo=chart,
-                caption="📉 Balance Trend (Last 30 Days)"
+                caption="📉 Balance Trend (Last 90 Days)"
             )
 
         elif action == 'top':

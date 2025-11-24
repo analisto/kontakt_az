@@ -14,8 +14,8 @@ class GeminiChatbot:
         """Initialize Gemini chatbot."""
         genai.configure(api_key=Config.GEMINI_API_KEY)
 
-        # Use Gemini Pro model
-        self.model = genai.GenerativeModel('gemini-pro')
+        # Use Gemini 2.5 Flash (stable, fast, and current)
+        self.model = genai.GenerativeModel('gemini-2.5-flash')
 
         # System prompt for the analyst bot
         self.system_prompt = """You are a helpful financial analyst assistant. You help users understand their financial data,
@@ -73,25 +73,16 @@ Focus on practical financial advice and data-driven insights."""
             # Save user message
             self.save_message(telegram_id, 'user', user_message)
 
-            # Build conversation history
-            messages = []
+            # For simpler interaction, don't use chat history with Gemini API
+            # Just send direct message with system context
+            full_message = f"{self.system_prompt}\n\nUser: {user_message}\n\nAssistant:"
 
-            if include_context:
-                # Get previous conversation
-                history = self.get_chat_history(telegram_id, limit=10)
-                messages.extend(history)
+            # Generate response
+            response = self.model.generate_content(full_message)
 
-            # Start chat with history
-            chat = self.model.start_chat(history=messages if include_context else [])
+            if not response or not response.text:
+                return "I'm having trouble generating a response. Please try again."
 
-            # Add system context to the first message
-            if not messages:
-                full_message = f"{self.system_prompt}\n\nUser: {user_message}"
-            else:
-                full_message = user_message
-
-            # Send message and get response
-            response = chat.send_message(full_message)
             assistant_message = response.text
 
             # Save assistant response
@@ -100,7 +91,10 @@ Focus on practical financial advice and data-driven insights."""
             return assistant_message
 
         except Exception as e:
-            error_message = f"Sorry, I encountered an error: {str(e)}"
+            import traceback
+            error_details = traceback.format_exc()
+            print(f"Gemini Error: {error_details}")
+            error_message = f"Sorry, I encountered an error with AI service. Please try again later.\n\nError: {str(e)}"
             return error_message
 
     def chat_with_data_context(
@@ -120,16 +114,40 @@ Focus on practical financial advice and data-driven insights."""
         Returns:
             The assistant's response
         """
-        # Enhance message with analytics context
-        if analytics_context:
-            enhanced_message = f"""Based on the following financial data:
+        try:
+            # Save user message
+            self.save_message(telegram_id, 'user', user_message)
+
+            # Build message with context
+            if analytics_context:
+                full_message = f"""{self.system_prompt}
+
+Here is the current financial data:
 
 {analytics_context}
 
 User question: {user_message}
 
-Please provide insights based on this data."""
-        else:
-            enhanced_message = user_message
+Please provide insights based on this data. Be specific and reference the actual numbers."""
+            else:
+                full_message = f"{self.system_prompt}\n\nUser: {user_message}\n\nAssistant:"
 
-        return self.chat(telegram_id, enhanced_message, include_context=True)
+            # Generate response
+            response = self.model.generate_content(full_message)
+
+            if not response or not response.text:
+                return "I'm having trouble generating a response. Please try again."
+
+            assistant_message = response.text
+
+            # Save assistant response
+            self.save_message(telegram_id, 'assistant', assistant_message)
+
+            return assistant_message
+
+        except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
+            print(f"Gemini Error with context: {error_details}")
+            error_message = f"Sorry, I encountered an error with AI service.\n\nError: {str(e)}"
+            return error_message

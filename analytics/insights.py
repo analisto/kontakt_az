@@ -1,6 +1,5 @@
 """Analytics insights generation module."""
-
-from datetime import datetime, timedelta, date
+from datetime import timedelta, date
 from typing import Dict, List, Any
 import pandas as pd
 from sqlalchemy import func, desc
@@ -37,7 +36,7 @@ class AnalyticsEngine:
             }
 
     @staticmethod
-    def get_transaction_trends(days: int = 30) -> pd.DataFrame:
+    def get_transaction_trends(days: int = 90) -> pd.DataFrame:
         """Get transaction trends for the specified number of days."""
         with get_session() as session:
             start_date = date.today() - timedelta(days=days)
@@ -46,6 +45,12 @@ class AnalyticsEngine:
                 Transaction.transaction_date >= start_date,
                 Transaction.transaction_status == 'completed'
             ).all()
+
+            # If no recent data, get all available transactions
+            if not transactions:
+                transactions = session.query(Transaction).filter(
+                    Transaction.transaction_status == 'completed'
+                ).order_by(Transaction.transaction_date.desc()).limit(100).all()
 
             if not transactions:
                 return pd.DataFrame()
@@ -64,7 +69,7 @@ class AnalyticsEngine:
             return df
 
     @staticmethod
-    def get_spending_by_type(days: int = 30) -> Dict[str, float]:
+    def get_spending_by_type(days: int = 90) -> Dict[str, float]:
         """Get spending breakdown by transaction type."""
         with get_session() as session:
             start_date = date.today() - timedelta(days=days)
@@ -80,6 +85,16 @@ class AnalyticsEngine:
                 Transaction.transaction_type.in_(debit_types),
                 Transaction.transaction_status == 'completed'
             ).group_by(Transaction.transaction_type).all()
+
+            # If no recent data, get all available spending
+            if not results:
+                results = session.query(
+                    Transaction.transaction_type,
+                    func.sum(Transaction.amount).label('total')
+                ).filter(
+                    Transaction.transaction_type.in_(debit_types),
+                    Transaction.transaction_status == 'completed'
+                ).group_by(Transaction.transaction_type).all()
 
             return {
                 trans_type: float(total)
@@ -147,7 +162,7 @@ class AnalyticsEngine:
             ]
 
     @staticmethod
-    def get_daily_balance_trend(days: int = 30) -> pd.DataFrame:
+    def get_daily_balance_trend(days: int = 90) -> pd.DataFrame:
         """Get daily balance trends."""
         with get_session() as session:
             start_date = date.today() - timedelta(days=days)
@@ -156,6 +171,12 @@ class AnalyticsEngine:
                 Transaction.transaction_date >= start_date,
                 Transaction.transaction_status == 'completed'
             ).order_by(Transaction.transaction_time).all()
+
+            # If no recent data, get all available transactions
+            if not transactions:
+                transactions = session.query(Transaction).filter(
+                    Transaction.transaction_status == 'completed'
+                ).order_by(Transaction.transaction_time).limit(100).all()
 
             if not transactions:
                 return pd.DataFrame()
@@ -170,8 +191,9 @@ class AnalyticsEngine:
 
             df['date'] = pd.to_datetime(df['date'])
             # Get last balance of each day
-            df = df.groupby(df['date'].dt.date).last().reset_index()
-            return df
+            df_grouped = df.groupby(df['date'].dt.date)['balance'].last().reset_index()
+            df_grouped.columns = ['date', 'balance']
+            return df_grouped
 
     @staticmethod
     def get_insights_text() -> str:
