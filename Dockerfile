@@ -26,8 +26,5 @@ RUN mkdir -p /tmp/charts
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
-# Make start script executable
-RUN chmod +x start.sh
-
-# Run the bot with startup script
-CMD ["./start.sh"]
+# Run the bot
+CMD ["python", "bot.py"]
