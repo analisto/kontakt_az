@@ -1,13 +1,13 @@
 # Financial Analyst Telegram Bot
 
-A hybrid Telegram bot that combines pre-generated analytics insights with AI-powered chat capabilities using Google's Gemini API.
+A hybrid Telegram bot that combines pre-generated analytics insights with AI-powered chat capabilities using Google's Gemini API. Works with the `demo_bank` PostgreSQL schema.
 
 ## Features
 
 ### Analytics Features
 - Account balance overview
 - Transaction trends and patterns
-- Spending breakdown by category
+- Spending breakdown by transaction type
 - Monthly financial summaries
 - Top transactions analysis
 - Interactive charts and visualizations
@@ -19,248 +19,348 @@ A hybrid Telegram bot that combines pre-generated analytics insights with AI-pow
 - Persistent chat history
 - Smart detection of financial queries
 
-## Project Structure
+## Quick Start with Docker (Recommended)
 
-```
-analyst_in_pocket/
-├── bot.py                  # Main bot application
-├── config.py              # Configuration management
-├── requirements.txt       # Python dependencies
-├── .env                   # Environment variables
-│
-├── database/              # Database layer
-│   ├── __init__.py
-│   ├── connection.py      # Database connection handler
-│   └── models.py          # SQLAlchemy models
-│
-├── analytics/             # Analytics engine
-│   ├── __init__.py
-│   ├── insights.py        # Analytics insights generation
-│   └── charts.py          # Chart generation
-│
-└── chatbot/               # AI chatbot
-    ├── __init__.py
-    └── gemini_client.py   # Gemini API integration
+### Prerequisites
+- Docker and Docker Compose installed
+- Telegram Bot Token
+- Google Gemini API Key
+- PostgreSQL database with `demo_bank` schema
+
+### Setup
+
+1. **Configure environment variables**
+
+Edit `.env` file:
+```env
+DATABASE_URL="postgresql://user:password@host:port/database"
+TELEGRAM_BOT_TOKEN="your_bot_token"
+GEMINI_API_KEY="your_gemini_api_key"
+ADMIN_USER_IDS=""
 ```
 
-## Setup Instructions
+2. **Deploy the bot**
 
-### 1. Prerequisites
+```bash
+# Make deploy script executable (first time only)
+chmod +x deploy.sh
 
-- Python 3.8 or higher
-- PostgreSQL database
+# Deploy
+./deploy.sh
+```
+
+3. **Bot is now running!** Open Telegram and send `/start` to your bot.
+
+### Docker Commands
+
+```bash
+# View logs
+docker-compose logs -f
+
+# Stop bot
+docker-compose down
+
+# Restart bot
+docker-compose restart
+
+# Rebuild and restart
+docker-compose up -d --build
+```
+
+## Manual Setup (Without Docker)
+
+### Prerequisites
+- Python 3.11 or higher
+- PostgreSQL database with `demo_bank` schema
 - Telegram Bot Token
 - Google Gemini API Key
 
-### 2. Clone and Install
+### Installation
 
 ```bash
-# Clone the repository (if applicable)
-cd analyst_in_pocket
-
 # Create virtual environment
 python -m venv venv
-
-# Activate virtual environment
-# On macOS/Linux:
-source venv/bin/activate
-# On Windows:
-# venv\Scripts\activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
+
+# Test setup
+python test_bot.py
+
+# Run bot
+python bot.py
 ```
 
-### 3. Configure Environment Variables
+## Getting API Keys
 
-Edit the `.env` file with your credentials:
-
-```env
-DATABASE_URL="your_postgresql_connection_string"
-TELEGRAM_BOT_TOKEN="your_telegram_bot_token"
-GEMINI_API_KEY="your_gemini_api_key"
-ADMIN_USER_IDS="comma_separated_admin_ids"
-```
-
-#### Getting Your Credentials:
-
-**Telegram Bot Token:**
+### Telegram Bot Token
 1. Open Telegram and search for `@BotFather`
 2. Send `/newbot` and follow the instructions
 3. Copy the token provided
 
-**Gemini API Key:**
+### Gemini API Key
 1. Visit https://makersuite.google.com/app/apikey
 2. Create a new API key
 3. Copy the key
 
-**Database URL:**
-- Use your PostgreSQL connection string
-- Format: `postgresql://user:password@host:port/database?schema=schema_name`
+## Database Schema
 
-### 4. Initialize Database
+The bot uses the existing `demo_bank` PostgreSQL schema with the following tables:
 
-The bot will automatically create necessary tables on first run. Ensure your PostgreSQL database is accessible and the schema specified in the DATABASE_URL exists.
+- **customers** - Bank customer information and account details
+- **transactions** - Financial transactions (deposits, withdrawals, transfers, loan payments)
+- **loans** - Loan information
+- **telegram_users** - Bot users (created automatically)
+- **chat_history** - Conversation history (created automatically)
 
-### 5. Run the Bot
+See `database/DEMO_BANK_DOCUMENTATION.md` for complete schema documentation.
 
-```bash
-python bot.py
-```
+## Bot Commands
 
-You should see:
-```
-INFO - Initializing database...
-INFO - Starting bot...
-```
-
-## Usage Guide
-
-### Bot Commands
-
-#### General Commands
+### General Commands
 - `/start` - Start the bot and see welcome message
 - `/help` - Display all available commands
 
-#### Analytics Commands
+### Analytics Commands
 - `/analytics` - Open interactive analytics dashboard
 - `/summary` - Get quick monthly financial summary
 - `/balance` - View account balance overview
-- `/spending` - See spending breakdown by category
+- `/spending` - See spending breakdown by type
 - `/trends` - View transaction trends
 - `/top` - See top transactions
 
-#### Chat Commands
+### Chat Commands
 - `/chat` - Activate chat mode
 - `/ask [question]` - Ask a specific question
 - `/clear` - Clear chat history
 
-### Using Analytics
+## Usage Examples
 
-1. Send `/analytics` to open the interactive menu
-2. Click on any button to view specific analytics
-3. Charts will be generated and sent as images
-4. Text summaries are provided alongside visualizations
+### Analytics Dashboard
+```
+1. Send /analytics
+2. Click any button to view insights
+3. Receive charts and detailed breakdowns
+```
 
-### Using the Chat Feature
-
-**Simple Chat:**
-Just send any message to the bot and it will respond using AI.
-
-**Financial Questions:**
-The bot automatically detects financial keywords and includes your data context in the conversation.
-
-Example:
+### AI Chat
 ```
 You: How much did I spend this month?
-Bot: Based on your data, you spent $X this month...
+Bot: Based on your data, you spent $X this month on...
+
+You: What's a good savings strategy?
+Bot: Here are some strategies based on your current financial situation...
 ```
 
-**Ask Command:**
+### Data-Aware Queries
+The bot automatically detects financial questions and includes your actual data in the AI conversation.
+
+## Project Structure
+
 ```
-/ask What's a good savings rate?
-/ask How can I reduce my spending?
+analyst_in_pocket/
+├── bot.py                   # Main bot application
+├── config.py                # Configuration management
+├── requirements.txt         # Python dependencies
+├── test_bot.py             # Test script
+├── deploy.sh               # Docker deployment script
+├── Dockerfile              # Docker image definition
+├── docker-compose.yml      # Docker Compose configuration
+│
+├── database/               # Database layer
+│   ├── connection.py       # Database connection handler
+│   ├── models.py           # SQLAlchemy models
+│   └── DEMO_BANK_DOCUMENTATION.md  # Schema documentation
+│
+├── analytics/              # Analytics engine
+│   ├── insights.py         # Analytics insights generation
+│   └── charts.py           # Chart generation
+│
+└── chatbot/                # AI chatbot
+    └── gemini_client.py    # Gemini API integration
 ```
-
-## Database Schema
-
-The bot uses the following tables in the `demo_bank` schema:
-
-- **users** - Telegram user information
-- **accounts** - Bank accounts
-- **transactions** - Financial transactions
-- **chat_history** - Conversation history
 
 ## Analytics Available
 
 1. **Monthly Summary**
-   - Total income
-   - Total expenses
+   - Total income (deposits, transfers in, etc.)
+   - Total expenses (withdrawals, payments, fees)
    - Net savings
    - Transaction count
 
 2. **Account Overview**
-   - Total balance across accounts
+   - Total balance across all accounts
    - Individual account balances
-   - Account types
+   - Account types (checking, savings, business, investment)
 
 3. **Spending Analysis**
-   - Breakdown by category
+   - Breakdown by transaction type
    - Pie chart visualization
    - Top spending categories
 
 4. **Transaction Trends**
    - Daily transaction patterns
+   - 30-day trends by type
    - Income vs. expenses over time
-   - 30-day trends
 
 5. **Balance Trends**
    - Daily balance changes
-   - Account balance history
+   - 30-day balance history
 
 6. **Top Transactions**
-   - Largest transactions
-   - By type (credit/debit)
+   - Largest transactions by amount
+   - Filter by type
    - With descriptions and dates
+
+## Testing
+
+Run the test script to verify everything is configured correctly:
+
+```bash
+python test_bot.py
+```
+
+The test checks:
+- Configuration validation
+- Database connectivity
+- Analytics engine
+- Chart generator
+- Gemini chatbot
+- Bot imports
 
 ## Development
 
 ### Adding New Analytics
 
-1. Add new method to `analytics/insights.py`:
+1. Add method to `analytics/insights.py`:
 ```python
 @staticmethod
-def get_new_insight() -> Dict:
-    # Your analytics logic
-    pass
+def get_new_insight(days: int = 30) -> Dict[str, Any]:
+    with get_session() as session:
+        # Query database
+        results = session.query(Transaction).filter(...).all()
+        return {'data': results}
 ```
 
-2. Add chart generation in `analytics/charts.py`:
+2. Add chart in `analytics/charts.py`:
 ```python
-def create_new_chart(self, data) -> io.BytesIO:
-    # Your chart logic
-    pass
+def create_new_chart(self, data: Dict) -> io.BytesIO:
+    fig, ax = plt.subplots()
+    # Create visualization
+    return self._save_plot_to_bytes()
 ```
 
 3. Add command handler in `bot.py`:
 ```python
 async def new_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Handle command
-    pass
+    data = AnalyticsEngine.get_new_insight()
+    chart = chart_generator.create_new_chart(data)
+    await update.message.reply_photo(photo=chart)
 ```
 
-### Customizing the Chatbot
+### Customizing AI Behavior
 
-Edit the `system_prompt` in `chatbot/gemini_client.py` to customize the AI assistant's personality and behavior.
+Edit `system_prompt` in `chatbot/gemini_client.py` to change the AI assistant's personality and behavior.
 
 ## Troubleshooting
 
 ### Database Connection Issues
-- Verify DATABASE_URL is correct
-- Ensure PostgreSQL is running
-- Check schema exists in database
+```bash
+# Test connection manually
+python -c "from database import get_session; print('Connected!' if get_session() else 'Failed')"
+```
 
-### Bot Not Responding
-- Verify TELEGRAM_BOT_TOKEN is correct
-- Check bot is running (`python bot.py`)
-- Ensure bot is not blocked
+### Bot Not Starting
+- Check `.env` file exists and has all required variables
+- Verify Telegram token is correct
+- Check database is accessible
+- Run `python test_bot.py` to diagnose issues
 
 ### Gemini API Errors
-- Verify GEMINI_API_KEY is valid
-- Check API quota limits
-- Ensure internet connection
+- Verify API key is valid
+- Check quota limits at https://makersuite.google.com
+- Ensure internet connectivity
 
-### Chart Generation Issues
-- Ensure matplotlib backend is set correctly
-- Check sufficient disk space for temp files
-- Verify all chart dependencies installed
+### Docker Issues
+```bash
+# View detailed logs
+docker-compose logs --tail=100 bot
 
-## Security Notes
+# Check container status
+docker-compose ps
+
+# Restart with fresh build
+docker-compose down && docker-compose up -d --build
+```
+
+## Security Best Practices
 
 - Never commit `.env` file to version control
-- Keep API keys secure
-- Use environment variables for sensitive data
-- Restrict admin commands to authorized users
+- Keep API keys secure and rotate regularly
+- Use environment variables for all sensitive data
+- Restrict admin commands to authorized users only
+- Review chat history permissions
+
+## Performance Tips
+
+- The bot creates charts on-demand; larger datasets may take longer
+- Chat history is stored in database; clear periodically if needed
+- Database queries are optimized with indexes (see schema documentation)
+- Docker deployment includes automatic restart on failure
+
+## Deployment Options
+
+### Option 1: Docker (Recommended)
+```bash
+./deploy.sh
+```
+
+### Option 2: Docker Compose
+```bash
+docker-compose up -d
+```
+
+### Option 3: Systemd Service (Linux)
+```bash
+# Create service file
+sudo nano /etc/systemd/system/analyst-bot.service
+
+# Enable and start
+sudo systemctl enable analyst-bot
+sudo systemctl start analyst-bot
+```
+
+### Option 4: Manual
+```bash
+python bot.py
+```
+
+## Monitoring
+
+### View Logs
+```bash
+# Docker
+docker-compose logs -f
+
+# Manual
+# Logs are printed to stdout
+```
+
+### Health Check
+```bash
+# Check if bot is responding
+# Send /start command to bot in Telegram
+```
+
+## Contributing
+
+To add features:
+1. Create new branch
+2. Add feature in appropriate module
+3. Test with `python test_bot.py`
+4. Update documentation
+5. Submit pull request
 
 ## License
 
@@ -268,7 +368,17 @@ This project is provided as-is for educational and personal use.
 
 ## Support
 
-For issues or questions:
-1. Check the troubleshooting section
-2. Review error logs
-3. Verify all dependencies are installed correctly
+For issues:
+1. Run `python test_bot.py` to diagnose
+2. Check logs for error messages
+3. Verify all environment variables are set
+4. Consult `database/DEMO_BANK_DOCUMENTATION.md` for schema details
+
+## What's Next?
+
+- Add more chart types (histogram, scatter plots)
+- Implement spending predictions using ML
+- Add budget tracking and alerts
+- Create scheduled reports
+- Multi-language support
+- Export data to CSV/Excel
