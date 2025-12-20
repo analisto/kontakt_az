@@ -1,0 +1,34 @@
+[
+  {
+    "title": "Global Energy Mix Dominated by Fossil Fuels",
+    "insight": "Coal (34.3%) and Gas (22.0%) account for over half of global electricity production. Renewables (Wind, Solar, Hydro) combined represent 29.3% of total production."
+  },
+  {
+    "title": "China Dominates Global Electricity Production",
+    "insight": "China produces 10,073 TWh, nearly 2.3x more than the USA (4,387 TWh). The top 3 producers (China, USA, India) account for 53.5% of global production."
+  },
+  {
+    "title": "Diverse Energy Strategies Among Top Producers",
+    "insight": "China relies heavily on coal, USA has a balanced mix of gas/coal/nuclear/renewables, Brazil is dominated by hydro, and France leads in nuclear energy. Each country's energy mix reflects its natural resources and policy choices."
+  },
+  {
+    "title": "Renewable Energy Leaders",
+    "insight": "China leads in absolute renewable production (2,894 TWh), but countries like Brazil, Canada, and Norway have much higher renewable percentages (84.7%, 66.5%, 21.9% respectively), showing different paths to clean energy."
+  },
+  {
+    "title": "Net Exporters vs Importers",
+    "insight": "Top exporters: China, United States, India. Top importers: . This reflects energy independence strategies and cross-border electricity trade."
+  },
+  {
+    "title": "Wealth Correlates with Energy Consumption",
+    "insight": "Top per capita consumers are wealthy nations and oil-rich states. Iceland leads with 16,882 kgoe/year, vastly exceeding global average. High consumption reflects industrialization, climate, and lifestyle factors."
+  },
+  {
+    "title": "Energy Efficiency Varies Dramatically",
+    "insight": "Most efficient economies (like Rwanda) use advanced technology and service-based economies. Least efficient (like Turkmenistan) reflect heavy industry, cold climates, or inefficient infrastructure."
+  },
+  {
+    "title": "Renewable Technology Choices Differ by Region",
+    "insight": "China leads in both solar (834 TWh) and wind. Solar dominates in sunny regions, wind in coastal/windy areas. This shows geographical and policy factors in renewable deployment."
+  }
+]
