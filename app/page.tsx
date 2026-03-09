@@ -88,12 +88,14 @@ export default function SimonSaysPage() {
   }, [handleKeyDown]);
 
   const isInteractive = phase === 'player_turn';
+  // Show labels on buttons when idle or during player's turn
+  const showLabels = phase === 'idle' || phase === 'player_turn';
 
   return (
     <main
       className={[
         'min-h-dvh w-full flex flex-col items-center justify-center',
-        'px-4 py-6 gap-5',
+        'px-4 py-6 gap-4',
         'bg-[radial-gradient(ellipse_at_top,_#1e1040_0%,_#06060f_70%)]',
       ].join(' ')}
     >
@@ -103,13 +105,15 @@ export default function SimonSaysPage() {
         onToggleSound={() => setSoundEnabled((s) => !s)}
       />
 
-      {/* ── Score panel ────────────────────────────────────────────── */}
-      <ScorePanel
-        score={score}
-        round={round}
-        difficulty={difficulty}
-        highScore={scores[difficulty]}
-      />
+      {/* ── Score panel (hidden on idle) ────────────────────────────── */}
+      {phase !== 'idle' && (
+        <ScorePanel
+          score={score}
+          round={round}
+          difficulty={difficulty}
+          highScore={scores[difficulty]}
+        />
+      )}
 
       {/* ── Game board ─────────────────────────────────────────────── */}
       <div className="relative w-full flex justify-center">
@@ -136,6 +140,7 @@ export default function SimonSaysPage() {
             activeButton={activeButton}
             isInteractive={isInteractive}
             onPress={pressButton}
+            showLabels={showLabels}
           />
 
           {/* Game over / paused overlay */}
@@ -151,6 +156,32 @@ export default function SimonSaysPage() {
         </div>
       </div>
 
+      {/* ── Status banner (showing / player_turn / success / paused) ── */}
+      <AnimatePresence mode="wait">
+        {phase !== 'idle' && phase !== 'game_over' && (
+          <motion.div
+            key={phase}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2 }}
+            className={[
+              'w-full max-w-[420px] py-3 px-4 rounded-xl text-center font-semibold text-sm',
+              phase === 'player_turn'
+                ? 'bg-violet-600/30 border border-violet-400/50 text-violet-200'
+                : phase === 'success'
+                ? 'bg-green-600/30 border border-green-400/50 text-green-200'
+                : 'bg-white/5 border border-white/10 text-white/60',
+            ].join(' ')}
+          >
+            {phase === 'showing'     && '👀 Watch the sequence carefully…'}
+            {phase === 'player_turn' && '👆 Your turn! Tap the buttons in the same order.'}
+            {phase === 'success'     && '✅ Correct! Get ready for the next round…'}
+            {phase === 'paused'      && '⏸ Game paused'}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── Controls ───────────────────────────────────────────────── */}
       <AnimatePresence mode="wait">
         {phase === 'idle' ? (
@@ -160,8 +191,40 @@ export default function SimonSaysPage() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -10, opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="flex flex-col items-center gap-4 w-full max-w-[420px]"
+            className="flex flex-col items-center gap-3 w-full max-w-[420px]"
           >
+            {/* ── How to Play card ───────────────────────────────── */}
+            <div className="w-full rounded-2xl border border-white/10 bg-white/5 p-4">
+              <p className="text-xs font-bold uppercase tracking-widest text-white/40 mb-2">
+                How to Play
+              </p>
+              <ol className="text-sm text-white/70 space-y-1.5 list-none">
+                <li>
+                  <span className="text-violet-400 font-bold mr-1">1.</span>
+                  Watch the buttons light up in sequence.
+                </li>
+                <li>
+                  <span className="text-violet-400 font-bold mr-1">2.</span>
+                  Repeat the exact same sequence by tapping the buttons.
+                </li>
+                <li>
+                  <span className="text-violet-400 font-bold mr-1">3.</span>
+                  Each round adds one more button to the sequence.
+                </li>
+                <li>
+                  <span className="text-violet-400 font-bold mr-1">4.</span>
+                  One wrong press and the game is over!
+                </li>
+              </ol>
+              <p className="text-xs text-white/30 mt-3">
+                Keyboard: <kbd className="font-mono text-white/50 bg-white/10 px-1 rounded">Q</kbd> Green &nbsp;
+                <kbd className="font-mono text-white/50 bg-white/10 px-1 rounded">E</kbd> Red &nbsp;
+                <kbd className="font-mono text-white/50 bg-white/10 px-1 rounded">A</kbd> Yellow &nbsp;
+                <kbd className="font-mono text-white/50 bg-white/10 px-1 rounded">D</kbd> Blue &nbsp;·&nbsp;
+                <kbd className="font-mono text-white/50 bg-white/10 px-1 rounded">Space</kbd> Pause
+              </p>
+            </div>
+
             <DifficultySelector selected={difficulty} onChange={setDifficulty} />
 
             <motion.button
@@ -175,17 +238,8 @@ export default function SimonSaysPage() {
                 'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400',
               ].join(' ')}
             >
-              Start Game
+              ▶ Start Game
             </motion.button>
-
-            <p className="text-xs text-white/30 text-center leading-relaxed">
-              Keyboard:&nbsp;
-              <kbd className="font-mono text-white/50">Q</kbd> Green&nbsp;
-              <kbd className="font-mono text-white/50">E</kbd> Red&nbsp;
-              <kbd className="font-mono text-white/50">A</kbd> Yellow&nbsp;
-              <kbd className="font-mono text-white/50">D</kbd> Blue&nbsp;·&nbsp;
-              <kbd className="font-mono text-white/50">Space</kbd> Pause
-            </p>
           </motion.div>
         ) : (
           <motion.div
@@ -196,7 +250,7 @@ export default function SimonSaysPage() {
             transition={{ duration: 0.3 }}
             className="flex gap-3 w-full max-w-[420px]"
           >
-            {/* Pause button (not during game-over) */}
+            {/* Pause button */}
             {(phase === 'showing' || phase === 'player_turn' || phase === 'success') && (
               <motion.button
                 onClick={pause}
@@ -204,7 +258,7 @@ export default function SimonSaysPage() {
                 whileTap={{ scale: 0.96 }}
                 className={[
                   'flex-1 py-3 rounded-xl font-bold text-sm',
-                  'bg-white/8 hover:bg-white/15 border border-white/15 text-white/70',
+                  'bg-white/10 hover:bg-white/20 border border-white/20 text-white/80',
                   'transition-colors focus-visible:outline-none',
                 ].join(' ')}
               >
@@ -235,32 +289,13 @@ export default function SimonSaysPage() {
               whileTap={{ scale: 0.96 }}
               className={[
                 'flex-1 py-3 rounded-xl font-bold text-sm',
-                'bg-white/5 hover:bg-white/12 border border-white/10 text-white/50',
+                'bg-white/5 hover:bg-white/10 border border-white/15 text-white/60',
                 'transition-colors focus-visible:outline-none',
               ].join(' ')}
             >
               ↩ Menu
             </motion.button>
           </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Status hint ─────────────────────────────────────────────── */}
-      <AnimatePresence mode="wait">
-        {phase !== 'idle' && phase !== 'game_over' && (
-          <motion.p
-            key={phase}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.2 }}
-            className="text-sm text-white/40 text-center min-h-[1.5em]"
-          >
-            {phase === 'showing'     && '👀 Watch the sequence…'}
-            {phase === 'player_turn' && '👆 Your turn — repeat the sequence!'}
-            {phase === 'success'     && '✅ Correct! Next round…'}
-            {phase === 'paused'      && '⏸ Game paused'}
-          </motion.p>
         )}
       </AnimatePresence>
     </main>

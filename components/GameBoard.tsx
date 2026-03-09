@@ -13,12 +13,14 @@ interface Props {
   activeButton: ButtonId | null;
   isInteractive: boolean;
   onPress: (id: ButtonId) => void;
+  /** Show color + key labels on buttons */
+  showLabels?: boolean;
 }
 
 /** Corner assignment in grid order: [0]=tl, [1]=tr, [2]=bl, [3]=br */
 const CORNERS: Array<'tl' | 'tr' | 'bl' | 'br'> = ['tl', 'tr', 'bl', 'br'];
 
-export default function GameBoard({ activeButton, isInteractive, onPress }: Props) {
+export default function GameBoard({ activeButton, isInteractive, onPress, showLabels = false }: Props) {
   return (
     <div
       className="relative w-full max-w-[360px] sm:max-w-[420px] aspect-square mx-auto"
@@ -35,6 +37,7 @@ export default function GameBoard({ activeButton, isInteractive, onPress }: Prop
             isInteractive={isInteractive}
             onPress={() => onPress(config.id)}
             corner={CORNERS[i]}
+            showLabel={showLabels}
           />
         ))}
       </div>

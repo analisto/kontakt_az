@@ -19,6 +19,8 @@ interface Props {
   onPress: () => void;
   /** Which corner of the 2×2 grid this button occupies */
   corner: 'tl' | 'tr' | 'bl' | 'br';
+  /** Show color name + key hint label (idle / player turn) */
+  showLabel?: boolean;
 }
 
 /** Outer corner radius per grid position (large outer, small inner) */
@@ -35,6 +37,7 @@ export default function SimonButton({
   isInteractive,
   onPress,
   corner,
+  showLabel = false,
 }: Props) {
   return (
     <motion.button
@@ -42,11 +45,11 @@ export default function SimonButton({
       aria-pressed={isActive}
       disabled={!isInteractive}
       onClick={onPress}
-      // Tactile press animation — only when interactive
       whileTap={isInteractive ? { scale: 0.93 } : undefined}
       transition={{ type: 'spring', stiffness: 400, damping: 20 }}
       className={[
         'w-full h-full select-none outline-none focus-visible:ring-4 focus-visible:ring-white/50',
+        'relative flex items-center justify-center',
         'transition-[background-color,box-shadow] duration-100',
         CORNER_RADIUS[corner],
         isInteractive ? 'cursor-pointer' : 'cursor-default',
@@ -58,14 +61,32 @@ export default function SimonButton({
           : `inset 0 2px 4px rgba(0,0,0,0.5)`,
       }}
     >
-      {/* Subtle gloss highlight on the button face */}
+      {/* Gloss highlight */}
       <span
-        className={[
-          'block w-full h-full rounded-[inherit]',
-          'bg-gradient-to-br from-white/10 to-transparent',
-          'pointer-events-none',
-        ].join(' ')}
+        className="absolute inset-0 rounded-[inherit] bg-gradient-to-br from-white/10 to-transparent pointer-events-none"
       />
+
+      {/* Color name + keyboard shortcut label */}
+      {showLabel && (
+        <span className="relative flex flex-col items-center gap-0.5 pointer-events-none select-none">
+          <span
+            className="text-xs sm:text-sm font-bold uppercase tracking-widest"
+            style={{ color: isActive ? '#fff' : `${config.activeColor}cc` }}
+          >
+            {config.label}
+          </span>
+          <kbd
+            className="text-[10px] sm:text-xs font-mono px-1.5 py-0.5 rounded border"
+            style={{
+              color: isActive ? '#fff' : `${config.activeColor}99`,
+              borderColor: isActive ? '#ffffff60' : `${config.activeColor}44`,
+              backgroundColor: 'rgba(0,0,0,0.3)',
+            }}
+          >
+            {config.key.toUpperCase()}
+          </kbd>
+        </span>
+      )}
     </motion.button>
   );
 }
